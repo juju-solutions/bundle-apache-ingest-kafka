@@ -77,7 +77,7 @@ as expected.  You can get more information about that component's smoke test:
 SSH to the Flume unit and verify the flume-ng java process is running:
 
     juju ssh flume-hdfs/0
-    ps -ef | grep flume-ng # verify process is running
+    ps -ef | grep flume  # verify process is running
     exit
 
 ### Test Kafka-Flume
