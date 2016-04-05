@@ -22,11 +22,10 @@ given Kafka topic into HDFS.
 
 Deploy this bundle using juju-quickstart:
 
-    juju quickstart apache-ingest-kafka
+    juju quickstart apache-ingestion-kafka
 
 See `juju quickstart --help` for deployment options, including machine
-constraints and how to deploy a locally modified version of the
-`apache-ingestion-flume` bundle.yaml.
+constraints and how to deploy a locally modified version of `bundle.yaml`.
 
 
 ## Configuration
@@ -47,7 +46,7 @@ Once the Flume agents start, messages will start flowing into
 HDFS in year-month-day directories here: `/user/flume/flume-kafka/%y-%m-%d`.
 
 
-## Status and Smoke Test
+## Verify the deployment
 
 The services provide extended status reporting to indicate when they are ready:
 
@@ -58,13 +57,14 @@ progress of the deployment:
 
     watch -n 0.5 juju status --format=tabular
 
-The charm for each core component (namenode, resourcemanager)
+The charm for each core component (namenode, resourcemanager, kafka)
 also each provide a `smoke-test` action that can be used to verify that each
 component is functioning as expected.  You can run them all and then watch the
 action status list:
 
     juju action do namenode/0 smoke-test
     juju action do resourcemanager/0 smoke-test
+    juju action do kafka/0 smoke-test
     watch -n 0.5 juju action status
 
 Eventually, all of the actions should settle to `status: completed`.  If
@@ -74,18 +74,16 @@ as expected.  You can get more information about that component's smoke test:
     juju action fetch <action-id>
 
 ### Smoke test Flume
-SSH to the Flume unit and verify the flume-ng java process is running:
+Verify the flume java process is running on the flume-hdfs unit:
 
-    juju ssh flume-hdfs/0
-    ps -ef | grep flume  # verify process is running
-    exit
+    juju run --unit flume-hdfs/0 'ps -ef | grep java'
 
 ### Test Kafka-Flume
-Generate Kafka messages on the `flume-kafka` unit with the producer script:
+A Kafka topic is required for this test. Topic creation is covered in the
+**Configuration** section above. Generate Kafka messages with the `write-topic`
+action:
 
-    juju ssh flume-kafka/0
-    kafka-console-producer.sh --broker-list localhost:9092 --topic <topic_name>
-    <type message, press Enter>
+    juju action do kafka/0 write-topic topic=<topic_name> data="This is a test"
 
 To verify these messages are being stored into HDFS, SSH to the `flume-hdfs`
 unit, locate an event, and cat it:
@@ -96,16 +94,40 @@ unit, locate an event, and cat it:
     hdfs dfs -cat /user/flume/flume-kafka/yyyy-mm-dd/FlumeData.[id]
 
 
-## Scale Out Usage
+## Scaling
 
-This bundle was designed to scale out. To increase the amount of Compute
-Slaves, you can add units to the compute-slave service. To add one unit:
+This bundle was designed to scale out. To increase the amount of
+slaves, you can add units to the slave service. To add one unit:
 
-    juju add-unit compute-slave
+    juju add-unit slave
 
-You can also add multiple units, for examle, to add four more compute slaves:
+Or you can add multiple units at once:
 
-    juju add-unit -n4 compute-slave
+    juju add-unit -n4 slave
+
+
+## Connecting External Clients
+
+By default, this bundle does not expose Kafka outside of the provider's network.
+To allow external clients to connect to Kafka, first expose the service:
+
+    juju expose kafka
+
+Next, ensure the external client can resolve the short hostname of the kafka
+unit. A simple way to do this is to add an `/etc/hosts` entry on the external
+kafka client machine. Gather the needed info from juju:
+
+    user@juju-client$ juju run --unit kafka/0 'hostname -s'
+    kafka-0
+    user@juju-client$ juju status --format=yaml kafka/0 | grep public-address
+    public-address: 40.784.149.135
+
+Update `/etc/hosts` on the external kafka client:
+
+    user@kafka-client$ echo "40.784.149.135 kafka-0" | sudo tee -a /etc/hosts
+
+The external kafka client should now be able to access Kafka by using
+`kafka-0:9092` as the broker.
 
 
 ## Contact Information

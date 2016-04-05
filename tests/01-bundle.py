@@ -57,7 +57,9 @@ class TestBundle(unittest.TestCase):
         assert 'DataNode' not in hdfs, "DataNode should not be running on namenode"
         assert 'DataNode' not in kafka, "DataNode should not be running on kafka"
 
-    def test_hdfs_dir(self):
+        assert 'Kafka' in kafka, 'Kafka should be running on kafka'
+
+    def test_hdfs(self):
         """Smoke test validates mkdir, ls, chmod, and rm on the hdfs cluster."""
         unit_name = self.hdfs.info['unit_name']
         uuid = self.d.action_do(unit_name, 'smoke-test')
@@ -67,7 +69,7 @@ class TestBundle(unittest.TestCase):
             error = "HDFS smoke-test failed"
             amulet.raise_status(amulet.FAIL, msg=error)
 
-    def test_yarn_mapreduce_exe(self):
+    def test_yarn(self):
         """Smoke test validates teragen/terasort."""
         unit_name = self.yarn.info['unit_name']
         uuid = self.d.action_do(unit_name, 'smoke-test')
@@ -76,6 +78,16 @@ class TestBundle(unittest.TestCase):
         # empty, the test has failed and has a 'log' key
         if result:
             error = "YARN smoke-test failed: %s" % result['log']
+            amulet.raise_status(amulet.FAIL, msg=error)
+
+    def test_kafka(self):
+        """Smoke test validates create/list/delete of a Kafka topic."""
+        unit_name = self.kafka.info['unit_name']
+        uuid = self.d.action_do(unit_name, 'smoke-test')
+        result = self.d.action_fetch(uuid)
+        # kafka smoke-test sets outcome=success on success
+        if (result['outcome'] != "success"):
+            error = "Kafka smoke-test failed"
             amulet.raise_status(amulet.FAIL, msg=error)
 
 
