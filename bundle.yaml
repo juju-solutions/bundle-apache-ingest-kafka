@@ -32,19 +32,19 @@ services:
       gui-x: "1200"
       gui-y: "100"
   flume-kafka:
-    charm: cs:trusty/apache-flume-kafka
+    charm: cs:trusty/apache-flume-kafka-0
     num_units: 1
     annotations:
       gui-x: "1500"
       gui-y: "100"
   kafka:
-    charm: cs:trusty/apache-kafka
+    charm: cs:trusty/apache-kafka-3
     num_units: 1
     annotations:
       gui-x: "1500"
       gui-y: "350"
   zookeeper:
-    charm: cs:trusty/apache-zookeeper
+    charm: cs:trusty/apache-zookeeper-1
     num_units: 3
     annotations:
       gui-x: "1200"
