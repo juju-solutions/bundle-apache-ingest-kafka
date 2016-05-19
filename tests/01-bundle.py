@@ -30,7 +30,7 @@ class TestBundle(unittest.TestCase):
         hdfs, retcode = self.hdfs.run("pgrep -a java")
         yarn, retcode = self.yarn.run("pgrep -a java")
         slave, retcode = self.slave.run("pgrep -a java")
-        kafka, retcode = self.pig.run("pgrep -a java")
+        kafka, retcode = self.kafka.run("pgrep -a java")
 
         assert 'NameNode' in hdfs, "NameNode not started"
         assert 'NameNode' not in yarn, "NameNode should not be running on resourcemanager"
